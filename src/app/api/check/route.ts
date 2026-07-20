@@ -23,10 +23,10 @@ List at most 6 of the most useful corrections, ordered by importance. Be honest 
 Text to check: """${text}"""`;
 
     try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-flash-latest',
-            contents: prompt,
-        });
+        const response = await callWithRetry(prompt);
+        if (!response) {
+            throw new Error('AI response was empty');
+        }
 
         const raw = response.text ?? '';
         const clean = raw.replace(/```json|```/g, '').trim();
@@ -37,4 +37,22 @@ Text to check: """${text}"""`;
         console.error(err);
         return NextResponse.json({ error: 'AI check failed' }, { status: 500 });
     }
+
+    async function callWithRetry(prompt: string, attempts = 2) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await ai.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents: prompt,
+      });
+    } catch (err: any) {
+      const isOverloaded = err?.status === 503;
+      if (isOverloaded && i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 1500)); // wait 1.5s and retry
+        continue;
+      }
+      throw err;
+    }
+  }
+}
 }
