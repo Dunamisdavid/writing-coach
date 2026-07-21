@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function callWithRetry(prompt: string, attempts = 2) {
   for (let i = 0; i < attempts; i++) {
     try {
-      return await ai.models.generateContent({ model: 'gemini-flash-latest', contents: prompt });
+      return await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: prompt });
     } catch (err: any) {
       if (err?.status === 503 && i < attempts - 1) {
         await new Promise((r) => setTimeout(r, 1500));
@@ -54,8 +54,14 @@ Text to check: """${text}"""`;
     });
 
     return NextResponse.json({ ...parsed, id: saved.id });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: 'AI check failed' }, { status: 500 });
+  } catch (err: any) {
+  console.error(err);
+  if (err?.status === 429) {
+    return NextResponse.json(
+      { error: "You've hit the free plan's request limit for now — try again in about a minute." },
+      { status: 429 }
+    );
   }
+  return NextResponse.json({ error: 'Feedback failed' }, { status: 500 });
+}
 }
