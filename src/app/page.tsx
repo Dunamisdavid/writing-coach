@@ -54,9 +54,13 @@ function ScoreRing({ label, value, color, delay = 0 }: { label: string; value: n
 
 export default function Home() {
   const [prompt, setPrompt] = useState(PROMPTS[0]);
+  const [history, setHistory] = useState<any[]>([]);
   const [text, setText] = useState('');
-  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  useEffect(() => {
+    fetch('/api/history').then(r => r.json()).then(setHistory).catch(() => { });
+  }, [result]); // refetches every time a new check completes
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   function newPrompt() {
@@ -71,7 +75,7 @@ export default function Home() {
       const res = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, prompt }),
       });
       const data = await res.json();
       if (data.error) setError('Something went wrong reading that — try again.');
@@ -179,6 +183,36 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {history.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-violet-100">
+            <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-4">
+              ✦ Your history
+            </p>
+            <div className="space-y-2">
+               {history.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-white/60 border border-violet-100 hover:border-violet-300 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-sans text-[13.5px] text-[#1E1B2E] truncate">
+                      {entry.text}
+                    </p>
+                    <p className="font-mono text-[10px] text-[#9CA3AF] mt-1">
+                      {new Date(entry.createdAt).toLocaleDateString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 font-display font-bold text-lg text-violet-600">
+                    {entry.scores?.overall ?? '—'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}    
       </div>
     </main>
   );
