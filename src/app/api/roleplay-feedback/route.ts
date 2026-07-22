@@ -5,11 +5,11 @@ import prisma from '@/lib/prisma';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
-    const { scenario, messages } = await req.json();
+    const { scenarioLabel, messages } = await req.json();
     const learnerLines = messages.filter((m: any) => m.role === 'user').map((m: any) => m.content).join('\n');
 
     const prompt = `You are a precise, encouraging English communication coach for a non-native speaker who is a professional web developer.
-Below are ONLY the learner's lines from a roleplay conversation (scenario: ${scenario}). Evaluate their English across the whole conversation.
+Below are ONLY the learner's lines from a roleplay conversation (scenario: ${scenarioLabel}). Evaluate their English across the whole conversation.
 Respond with ONLY a raw JSON object (no markdown fences, no preamble) with this exact shape:
 {
   "rewrite": "a short model example of how a fluent speaker might have handled the conversation overall",
@@ -29,7 +29,7 @@ Learner's lines:
 
         const saved = await prisma.entry.create({
             data: {
-                prompt: `Conversation: ${scenario}`,
+                prompt: `Conversation: ${scenarioLabel}`,
                 text: learnerLines,
                 rewrite: parsed.rewrite,
                 corrections: parsed.corrections,

@@ -12,16 +12,18 @@ export async function POST(req: NextRequest) {
     }
 
     const instruction = `You are a precise, encouraging English speaking coach for a non-native speaker who is a professional web developer.
-Listen to this audio recording. First transcribe exactly what was said, then evaluate it.
+Listen to this audio recording carefully — including pronunciation, pacing, and hesitations, not just the words. First transcribe exactly what was said, then evaluate it.
 Respond with ONLY a raw JSON object (no markdown fences, no preamble) with this exact shape:
 {
-  "transcript": "exact transcription of what they said",
+  "transcript": "exact transcription of what they said, including filler words like um/uh/like",
   "rewrite": "a more natural, fluent way to say the same thing",
   "corrections": [
-    {"original": "short phrase they said", "fixed": "corrected phrase", "why": "one plain sentence explaining the rule", "tag": "e.g. Tense, Grammar, Word Choice, Filler Word"}
+    {"original": "short phrase they said", "fixed": "corrected phrase", "why": "one plain sentence explaining the rule", "tag": "e.g. Tense, Grammar, Word Choice, Pronunciation"}
   ],
-  "fillerWordCount": number of filler words like "um", "uh", "like" used,
-  "scores": {"grammar": 0-100, "tense": 0-100, "vocabulary": 0-100, "clarity": 0-100, "natural": 0-100, "overall": 0-100}
+  "fillerWordCount": number of filler words like "um", "uh", "like", "you know" used,
+  "fillerWordsFound": ["list", "of", "the", "actual", "filler", "words", "heard"],
+  "pronunciationNotes": "one or two short, kind sentences about pronunciation or pacing, based on what you heard in the audio",
+  "scores": {"grammar": 0-100, "tense": 0-100, "vocabulary": 0-100, "clarity": 0-100, "natural": 0-100, "overall": 0-100, "pronunciation": 0-100}
 }
 List at most 6 of the most useful corrections. Be honest but kind in scoring.`;
 

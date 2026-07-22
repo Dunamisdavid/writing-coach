@@ -1,35 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const WRITE_PROMPTS = [
-  "Write a short email to your boss explaining you'll be a day late on a project.",
-  "Describe your morning routine in five sentences.",
-  "Explain why you'd make a good candidate for a promotion.",
-  "Write a message convincing a friend to try your favorite restaurant.",
-  "Describe a challenge you faced at work and how you solved it.",
-];
-
-const SPEAK_PROMPTS = [
-  "Introduce yourself as if meeting a new colleague.",
-  "Explain your job to someone outside your field.",
-  "Describe your weekend plans.",
-  "Give directions to your favorite coffee shop.",
-  "Talk about a movie or show you watched recently.",
-];
-
-const SCENARIOS = [
-  { id: 'interview', label: 'Job Interview', icon: '💼' },
-  { id: 'client', label: 'Client Meeting', icon: '🤝' },
-  { id: 'negotiation', label: 'Negotiation', icon: '⚖️' },
-  { id: 'support', label: 'Customer Support', icon: '🎧' },
-  { id: 'casual', label: 'Casual Chat', icon: '☕' },
-];
 
 type Correction = { original: string; fixed: string; why: string; tag: string };
-type Scores = { grammar: number; tense: number; vocabulary: number; clarity: number; natural: number; overall: number };
-type Result = { rewrite: string; corrections: Correction[]; scores: Scores; transcript?: string; id?: string };
+type Scores = {
+  grammar: number; tense: number; vocabulary: number; clarity: number; natural: number; overall: number;
+  pronunciation?: number;
+};
+type Result = {
+  rewrite: string; corrections: Correction[]; scores: Scores; id?: string;
+  transcript?: string; feedback?: string;
+  fillerWordCount?: number; fillerWordsFound?: string[]; pronunciationNotes?: string;
+};
 type ChatMsg = { role: 'user' | 'model'; content: string };
+type Scenario = { label: string; icon: string; persona: string };
+type DrillQ = { sentence: string; options: string[]; correctIndex: number; explanation: string };
 
 const RING_COLORS: Record<string, string> = {
   overall: '#7C3AED',
@@ -70,18 +57,23 @@ function ScoreRing({ label, value, color, delay = 0 }: { label: string; value: n
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<'write' | 'speak' | 'talk'>('write');
-  const [prompt, setPrompt] = useState(WRITE_PROMPTS[0]);
+  const [mode, setMode] = useState<'write' | 'speak' | 'talk' | 'drill' | 'rewrite'>('write');
+  const [writePrompts, setWritePrompts] = useState<string[]>(['Loading a prompt for you...']);
+  const [speakPrompts, setSpeakPrompts] = useState<string[]>(['Loading a topic for you...']);
+  const [rewriteSentences, setRewriteSentences] = useState<string[]>(['Loading a sentence for you...']);
+  const [promptLoading, setPromptLoading] = useState(false);
+  const [prompt, setPrompt] = useState('');
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState('');
+
   const [history, setHistory] = useState<any[]>([]);
   const [mistakes, setMistakes] = useState<{ tag: string; count: number }[]>([]);
-
   const [vocab, setVocab] = useState<{ original: string; fixed: string; count: number }[]>([]);
-
-  const [activePanel, setActivePanel] = useState<'mistakes' | 'vocabulary' | 'history' | null>(null);
+  const [progress, setProgress] = useState<any[]>([]);
+  const [streak, setStreak] = useState<{ streak: number; practicedToday: boolean } | null>(null);
+  const [activePanel, setActivePanel] = useState<'progress' | 'mistakes' | 'vocabulary' | 'history' | null>(null);
 
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -89,33 +81,59 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const [scenario, setScenario] = useState<string | null>(null);
+  const [scenarioOptions, setScenarioOptions] = useState<Scenario[]>([]);
+  const [scenariosLoading, setScenariosLoading] = useState(false);
+  const [customScenario, setCustomScenario] = useState('');
+  const [scenario, setScenario] = useState<Scenario | null>(null);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const [drillQuestions, setDrillQuestions] = useState<DrillQ[]>([]);
+  const [drillIndex, setDrillIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [drillScore, setDrillScore] = useState(0);
+  const [drillLoading, setDrillLoading] = useState(false);
+
+  const [rewriteSentence, setRewriteSentence] = useState('');
+  const [userRewrite, setUserRewrite] = useState('');
+
   useEffect(() => {
     fetch('/api/history').then((r) => r.json()).then(setHistory).catch(() => { });
     fetch('/api/mistakes').then((r) => r.json()).then(setMistakes).catch(() => { });
+    fetch('/api/vocabulary').then((r) => r.json()).then(setVocab).catch(() => { });
+    fetch('/api/progress').then((r) => r.json()).then(setProgress).catch(() => { });
+    fetch('/api/streak').then((r) => r.json()).then(setStreak).catch(() => { });
   }, [result]);
+
+  useEffect(() => {
+    loadScenarios();
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    fetch('/api/history').then((r) => r.json()).then(setHistory).catch(() => { });
-    fetch('/api/mistakes').then((r) => r.json()).then(setMistakes).catch(() => { });
-    fetch('/api/vocabulary').then((r) => r.json()).then(setVocab).catch(() => { });
-  }, [result]);
+    fetchPrompts('write').then((list) => { setWritePrompts(list); if (list[0]) setPrompt(list[0]); });
+    fetchPrompts('speak').then((list) => setSpeakPrompts(list));
+    fetchPrompts('rewrite').then((list) => { setRewriteSentences(list); if (list[0]) setRewriteSentence(list[0]); });
+  }, []);
 
-  function newPrompt() {
-    const list = mode === 'write' ? WRITE_PROMPTS : SPEAK_PROMPTS;
-    setPrompt(list[Math.floor(Math.random() * list.length)]);
+  async function newPrompt() {
+    setPromptLoading(true);
+    const type = mode === 'write' ? 'write' : 'speak';
+    const list = await fetchPrompts(type);
+    if (list.length > 0) {
+      if (type === 'write') setWritePrompts(list);
+      else setSpeakPrompts(list);
+      setPrompt(list[Math.floor(Math.random() * list.length)]);
+    }
+    setPromptLoading(false);
   }
 
-  function switchMode(next: 'write' | 'speak' | 'talk') {
+  function switchMode(next: 'write' | 'speak' | 'talk' | 'drill' | 'rewrite') {
     setMode(next);
     setResult(null);
     setError('');
@@ -123,7 +141,12 @@ export default function Home() {
     setAudioUrl(null);
     setScenario(null);
     setMessages([]);
-    setPrompt(next === 'write' ? WRITE_PROMPTS[0] : SPEAK_PROMPTS[0]);
+    setDrillQuestions([]);
+    setDrillIndex(0);
+    setSelectedOption(null);
+    setUserRewrite('');
+    if (next === 'write' && writePrompts.length > 0) setPrompt(writePrompts[0]);
+    if (next === 'speak' && speakPrompts.length > 0) setPrompt(speakPrompts[0]);
   }
 
   async function handleSubmit() {
@@ -194,11 +217,34 @@ export default function Home() {
     }
   }
 
-  function startScenario(id: string) {
-    setScenario(id);
+  async function loadScenarios() {
+    setScenariosLoading(true);
+    try {
+      const res = await fetch('/api/scenario-suggestions');
+      const data = await res.json();
+      if (Array.isArray(data)) setScenarioOptions(data);
+    } catch {
+      // ignore, grid will just stay empty and user can still type a custom scenario
+    } finally {
+      setScenariosLoading(false);
+    }
+  }
+
+  function startScenario(s: Scenario) {
+    setScenario(s);
     setMessages([]);
     setResult(null);
     setError('');
+  }
+
+  function startCustomScenario() {
+    if (!customScenario.trim()) return;
+    startScenario({
+      label: customScenario.length > 30 ? customScenario.slice(0, 30) + '…' : customScenario,
+      icon: '🎭',
+      persona: `You are roleplaying in this scenario: ${customScenario}. Stay in character, respond naturally and appropriately for the situation.`,
+    });
+    setCustomScenario('');
   }
 
   async function sendChatMessage() {
@@ -212,7 +258,7 @@ export default function Home() {
       const res = await fetch('/api/roleplay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario, messages: updated }),
+        body: JSON.stringify({ persona: scenario.persona, messages: updated }),
       });
       const data = await res.json();
       if (data.reply) setMessages((m) => [...m, { role: 'model', content: data.reply }]);
@@ -224,6 +270,7 @@ export default function Home() {
   }
 
   async function endConversation() {
+    if (!scenario) return;
     setLoading(true);
     setError('');
     setResult(null);
@@ -231,7 +278,7 @@ export default function Home() {
       const res = await fetch('/api/roleplay-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenario, messages }),
+        body: JSON.stringify({ scenarioLabel: scenario.label, messages }),
       });
       const data = await res.json();
       if (data.error) setError(data.error);
@@ -243,6 +290,78 @@ export default function Home() {
     }
   }
 
+  async function startDrill() {
+    setDrillLoading(true);
+    setDrillQuestions([]);
+    setDrillIndex(0);
+    setSelectedOption(null);
+    setDrillScore(0);
+    try {
+      const res = await fetch('/api/tense-drill');
+      const data = await res.json();
+      if (Array.isArray(data)) setDrillQuestions(data);
+      else setError('Could not generate a drill — try again.');
+    } catch {
+      setError('Could not reach the server — check your connection.');
+    } finally {
+      setDrillLoading(false);
+    }
+  }
+
+  function selectAnswer(i: number) {
+    if (selectedOption !== null) return;
+    setSelectedOption(i);
+    if (i === drillQuestions[drillIndex].correctIndex) setDrillScore((s) => s + 1);
+  }
+
+  function nextQuestion() {
+    setSelectedOption(null);
+    setDrillIndex((i) => i + 1);
+  }
+
+  async function newRewriteSentence() {
+    setPromptLoading(true);
+    const list = await fetchPrompts('rewrite');
+    if (list.length > 0) {
+      setRewriteSentences(list);
+      setRewriteSentence(list[Math.floor(Math.random() * list.length)]);
+    }
+    setUserRewrite('');
+    setResult(null);
+    setPromptLoading(false);
+  }
+
+  async function submitRewrite() {
+    setLoading(true);
+    setError('');
+    setResult(null);
+    try {
+      const res = await fetch('/api/rewrite-challenge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ original: rewriteSentence, userRewrite }),
+      });
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else setResult(data);
+    } catch {
+      setError('Could not reach the server — check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchPrompts(type: 'write' | 'speak' | 'rewrite'): Promise<string[]> {
+    try {
+      const res = await fetch(`/api/prompt-suggestions?type=${type}`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  }
+
+
   return (
     <main className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#EEF2FF] via-[#F5F3FF] to-[#FDF4FF] flex justify-center py-14 px-4">
       <div className="pointer-events-none absolute -top-20 -left-20 w-96 h-96 rounded-full bg-violet-300/40 blur-3xl animate-[blob-float_20s_ease-in-out_infinite]" />
@@ -253,13 +372,22 @@ export default function Home() {
         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-2">
           ✦ Marginal · Daily Practice
         </p>
-        <h1 className="font-display font-bold text-4xl text-[#1E1B2E] mb-2 tracking-tight">Today's page</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-display font-bold text-4xl text-[#1E1B2E] tracking-tight">Show up. Speak up.</h1>
+          {streak && streak.streak > 0 && (
+            <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-full px-3.5 py-1.5">
+              <span className="text-base">🔥</span>
+              <span className="font-display font-bold text-[15px] text-orange-600">{streak.streak}</span>
+              <span className="font-mono text-[9.5px] uppercase text-orange-500">day{streak.streak !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+        </div>
         <p className="text-[15px] text-[#6B6478] mb-6">
           Write, speak, or talk it out. I'll light up what's working and fix what's not.
         </p>
 
-        <div className="flex gap-2 mb-7">
-          {(['write', 'speak', 'talk'] as const).map((m) => (
+        <div className="flex gap-2 mb-7 flex-wrap">
+          {(['write', 'speak', 'talk', 'drill', 'rewrite'] as const).map((m) => (
             <button
               key={m}
               onClick={() => switchMode(m)}
@@ -276,8 +404,8 @@ export default function Home() {
             <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 rounded-2xl p-5 mb-7 border border-violet-100">
               <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500">Prompt</p>
               <p className="font-display text-lg text-[#1E1B2E] mt-1.5">{prompt}</p>
-              <button onClick={newPrompt} className="font-mono text-[11px] text-violet-600 hover:text-violet-800 mt-3 cursor-pointer transition-colors inline-flex items-center gap-1">
-                ↻ shuffle prompt
+              <button onClick={newPrompt} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 hover:text-violet-800 mt-3 cursor-pointer transition-colors inline-flex items-center gap-1 disabled:opacity-40">
+                {promptLoading ? '✦ thinking…' : '↻ shuffle prompt'}
               </button>
             </div>
             <textarea
@@ -346,23 +474,51 @@ export default function Home() {
         {mode === 'talk' && (
           <>
             {!scenario ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                {SCENARIOS.map((s) => (
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500">Pick a scenario</p>
                   <button
-                    key={s.id}
-                    onClick={() => startScenario(s.id)}
-                    className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 hover:border-violet-300 hover:scale-[1.03] transition-all cursor-pointer"
+                    onClick={loadScenarios}
+                    disabled={scenariosLoading}
+                    className="font-mono text-[10px] text-violet-500 hover:text-violet-700 cursor-pointer disabled:opacity-40"
                   >
-                    <span className="text-2xl">{s.icon}</span>
-                    <span className="font-sans text-[13px] text-[#1E1B2E] text-center">{s.label}</span>
+                    {scenariosLoading ? 'thinking…' : '🔀 new scenarios'}
                   </button>
-                ))}
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+                  {scenarioOptions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => startScenario(s)}
+                      className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 hover:border-violet-300 hover:scale-[1.05] transition-all cursor-pointer"
+                    >
+                      <span className="text-xl">{s.icon}</span>
+                      <span className="font-sans text-[11px] text-[#1E1B2E] text-center leading-tight">{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={customScenario}
+                    onChange={(e) => setCustomScenario(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && startCustomScenario()}
+                    placeholder="...or describe your own scenario"
+                    className="flex-1 bg-white/60 rounded-full border border-violet-100 px-4 py-2.5 font-sans text-[13px] text-[#1E1B2E] focus:outline-none focus:ring-2 focus:ring-violet-400"
+                  />
+                  <button
+                    onClick={startCustomScenario}
+                    disabled={!customScenario.trim()}
+                    className="font-mono text-xs uppercase px-4 py-2.5 rounded-full cursor-pointer bg-violet-600 text-white disabled:opacity-40"
+                  >
+                    Go
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-mono text-[10px] tracking-widest uppercase text-violet-500">
-                    {SCENARIOS.find((s) => s.id === scenario)?.icon} {SCENARIOS.find((s) => s.id === scenario)?.label}
+                    {scenario.icon} {scenario.label}
                   </span>
                   <button
                     onClick={() => { setScenario(null); setMessages([]); }}
@@ -435,6 +591,116 @@ export default function Home() {
           </>
         )}
 
+        {mode === 'drill' && (
+          <div className="mb-4">
+            {drillQuestions.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="font-sans text-[14px] text-[#6B6478] mb-5">
+                  Five questions, built around the tense mistakes you actually make.
+                </p>
+                <button
+                  onClick={startDrill}
+                  disabled={drillLoading}
+                  className="font-mono text-xs tracking-wider uppercase text-white px-7 py-3.5 rounded-full cursor-pointer
+                             bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40
+                             shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200"
+                >
+                  {drillLoading ? 'Building your drill…' : 'Start drill'}
+                </button>
+              </div>
+            ) : drillIndex >= drillQuestions.length ? (
+              <div className="text-center py-8 animate-[fade-slide-up_0.4s_ease-out]">
+                <p className="font-display font-bold text-3xl text-violet-600 mb-2">
+                  {drillScore} / {drillQuestions.length}
+                </p>
+                <p className="font-sans text-[14px] text-[#6B6478] mb-5">Nice work — want another round?</p>
+                <button
+                  onClick={startDrill}
+                  className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white"
+                >
+                  New drill
+                </button>
+              </div>
+            ) : (
+              <div className="animate-[fade-slide-up_0.3s_ease-out]">
+                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 mb-2">
+                  Question {drillIndex + 1} of {drillQuestions.length}
+                </p>
+                <p className="font-display text-xl text-[#1E1B2E] mb-5">
+                  {drillQuestions[drillIndex].sentence}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                  {drillQuestions[drillIndex].options.map((opt, i) => {
+                    const q = drillQuestions[drillIndex];
+                    const isCorrect = i === q.correctIndex;
+                    const isPicked = i === selectedOption;
+                    let style = 'bg-white/60 border-violet-100 hover:border-violet-300';
+                    if (selectedOption !== null) {
+                      if (isCorrect) style = 'bg-emerald-50 border-emerald-400';
+                      else if (isPicked) style = 'bg-rose-50 border-rose-300';
+                      else style = 'bg-white/40 border-violet-50 opacity-60';
+                    }
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => selectAnswer(i)}
+                        disabled={selectedOption !== null}
+                        className={`font-sans text-[14px] text-[#1E1B2E] text-left px-4 py-3 rounded-xl border transition-all cursor-pointer ${style}`}
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedOption !== null && (
+                  <div className="animate-[fade-slide-up_0.3s_ease-out]">
+                    <p className="font-sans text-[13.5px] text-[#6B6478] mb-4">
+                      {drillQuestions[drillIndex].explanation}
+                    </p>
+                    <button
+                      onClick={nextQuestion}
+                      className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white"
+                    >
+                      {drillIndex + 1 === drillQuestions.length ? 'See results' : 'Next question'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {mode === 'rewrite' && (
+          <div className="mb-4">
+            <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 rounded-2xl p-5 mb-5 border border-violet-100">
+              <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500">Make this professional</p>
+              <p className="font-display text-lg text-[#1E1B2E] mt-1.5 italic">"{rewriteSentence}"</p>
+              <button onClick={newRewriteSentence} className="font-mono text-[11px] text-violet-600 hover:text-violet-800 mt-3 cursor-pointer inline-flex items-center gap-1">
+                ↻ new sentence
+              </button>
+            </div>
+
+            <textarea
+              value={userRewrite}
+              onChange={(e) => setUserRewrite(e.target.value)}
+              placeholder="Your professional rewrite..."
+              className="w-full min-h-[100px] bg-white/60 rounded-2xl border border-violet-100 p-4 font-sans text-[16px] leading-relaxed text-[#1E1B2E] focus:outline-none focus:ring-2 focus:ring-violet-400 resize-y"
+            />
+
+            <div className="flex justify-end mt-5">
+              <button
+                onClick={submitRewrite}
+                disabled={loading || !userRewrite.trim()}
+                className="font-mono text-xs tracking-wider uppercase text-white px-7 py-3.5 rounded-full cursor-pointer
+                           bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40
+                           shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200"
+              >
+                {loading ? 'Comparing…' : 'Compare my rewrite'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <p className="font-mono text-xs text-rose-500 mt-4 animate-[fade-slide-up_0.3s_ease-out]">{error}</p>
         )}
@@ -450,16 +716,53 @@ export default function Home() {
             {result.transcript && (
               <>
                 <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-3">✦ What you said</p>
-                <p className="font-sans text-[16px] leading-relaxed text-[#1E1B2E] bg-violet-50/60 border border-violet-100 rounded-2xl p-5 mb-9">
+                <p className="font-sans text-[16px] leading-relaxed text-[#1E1B2E] bg-violet-50/60 border border-violet-100 rounded-2xl p-5 mb-6">
                   {result.transcript}
                 </p>
               </>
+            )}
+
+            {(result.fillerWordCount !== undefined || result.scores?.pronunciation !== undefined) && (
+              <div className="flex flex-wrap gap-3 mb-6">
+                {result.scores?.pronunciation !== undefined && (
+                  <div className="flex items-center gap-2 bg-white/60 border border-violet-100 rounded-full px-4 py-2">
+                    <span className="text-base">🗣️</span>
+                    <span className="font-display font-bold text-[15px] text-violet-600">{result.scores.pronunciation}</span>
+                    <span className="font-mono text-[9.5px] uppercase text-[#6B6478]">pronunciation</span>
+                  </div>
+                )}
+                {result.fillerWordCount !== undefined && (
+                  <div className="flex items-center gap-2 bg-white/60 border border-violet-100 rounded-full px-4 py-2">
+                    <span className="text-base">💬</span>
+                    <span className="font-display font-bold text-[15px] text-amber-600">{result.fillerWordCount}</span>
+                    <span className="font-mono text-[9.5px] uppercase text-[#6B6478]">
+                      filler word{result.fillerWordCount !== 1 ? 's' : ''}
+                      {result.fillerWordsFound && result.fillerWordsFound.length > 0 && ` (${result.fillerWordsFound.slice(0, 4).join(', ')})`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {result.pronunciationNotes && (
+              <p className="font-sans text-[14px] text-[#6B6478] leading-relaxed mb-6">
+                {result.pronunciationNotes}
+              </p>
             )}
 
             <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-3">✦ Cleaner version</p>
             <p className="font-sans text-[16px] leading-relaxed text-[#1E1B2E] bg-emerald-50/60 border border-emerald-100 rounded-2xl p-5 mb-9">
               {result.rewrite}
             </p>
+
+            {result.feedback && (
+              <>
+                <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-3">✦ How you compared</p>
+                <p className="font-sans text-[15px] leading-relaxed text-[#6B6478] bg-violet-50/40 border border-violet-100 rounded-2xl p-5 mb-9">
+                  {result.feedback}
+                </p>
+              </>
+            )}
 
             <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 mb-3">What changed, and why</p>
             <div className="space-y-3">
@@ -488,7 +791,7 @@ export default function Home() {
         )}
 
         <div className="flex gap-2 mt-12 pt-8 border-t border-violet-100">
-          {(['mistakes', 'vocabulary', 'history'] as const).map((p) => (
+          {(['progress', 'mistakes', 'vocabulary', 'history'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setActivePanel(activePanel === p ? null : p)}
@@ -499,6 +802,32 @@ export default function Home() {
             </button>
           ))}
         </div>
+
+        {activePanel === 'progress' && progress.length > 0 && (
+          <div className="mt-6">
+            <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-4">
+              ✦ Your progress over time
+            </p>
+            <div className="bg-white/60 border border-violet-100 rounded-2xl p-4 h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={progress}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(124,58,237,0.1)" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#6B6478' }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#6B6478' }} />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #EDE9FE', fontSize: 12 }} />
+                  <Line type="monotone" dataKey="overall" stroke="#7C3AED" strokeWidth={2.5} dot={{ r: 3 }} name="Overall" />
+                  <Line type="monotone" dataKey="grammar" stroke="#059669" strokeWidth={1.5} dot={false} name="Grammar" />
+                  <Line type="monotone" dataKey="vocabulary" stroke="#F59E0B" strokeWidth={1.5} dot={false} name="Vocabulary" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            {progress.length < 3 && (
+              <p className="font-mono text-[10px] text-[#9CA3AF] mt-3">
+                Keep practicing daily — the trend gets more meaningful with more days of data.
+              </p>
+            )}
+          </div>
+        )}
 
         {activePanel === 'mistakes' && mistakes.length > 0 && (
           <div className="mt-6">
@@ -527,20 +856,13 @@ export default function Home() {
 
         {activePanel === 'vocabulary' && vocab.length > 0 && (
           <div className="mt-6">
-            <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-4">
-              ✦ Vocabulary you've upgraded
-            </p>
+            <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-4">✦ Vocabulary you've upgraded</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {vocab.map((v, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 hover:border-violet-300 hover:scale-[1.03] transition-all"
-                >
+                <div key={i} className="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 hover:border-violet-300 hover:scale-[1.03] transition-all">
                   <p className="font-sans text-[13px] text-rose-400 line-through">{v.original}</p>
                   <p className="font-display font-semibold text-[15px] text-emerald-600 mt-0.5">{v.fixed}</p>
-                  {v.count > 1 && (
-                    <p className="font-mono text-[9.5px] text-violet-400 mt-2">used {v.count}×</p>
-                  )}
+                  {v.count > 1 && <p className="font-mono text-[9.5px] text-violet-400 mt-2">used {v.count}×</p>}
                 </div>
               ))}
             </div>
