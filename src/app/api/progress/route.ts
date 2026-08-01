@@ -1,14 +1,19 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
   const entries = await prisma.entry.findMany({
+    where: { userId },
     select: { scores: true, createdAt: true },
     orderBy: { createdAt: 'asc' },
   });
 
   const byDay = new Map<string, { sum: any; count: number }>();
-
   for (const e of entries) {
     const day = e.createdAt.toISOString().slice(0, 10);
     const s = (e.scores as any) || {};

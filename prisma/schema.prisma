@@ -6,12 +6,33 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  entries      Entry[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 model Entry {
   id          String   @id @default(cuid())
+  userId      String
+  user        User?    @relation(fields: [userId], references: [id])
   prompt      String
   text        String
   rewrite     String
   corrections Json
   scores      Json
   createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
+

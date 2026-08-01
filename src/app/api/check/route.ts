@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -19,6 +20,11 @@ async function callWithRetry(prompt: string, attempts = 2) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  console.log('DEBUG session:', JSON.stringify(session));
+  const userId = session?.user?.id;
+  if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
   const { text, prompt: userPrompt } = await req.json();
 
   if (!text || !text.trim()) {
@@ -34,8 +40,7 @@ Given the learner's text, respond with ONLY a raw JSON object (no markdown fence
   ],
   "scores": {"grammar": 0-100, "tense": 0-100, "vocabulary": 0-100, "clarity": 0-100, "natural": 0-100, "overall": 0-100}
 }
-List at most 6 of the most useful corrections, ordered by importance. Be honest but kind in scoring.
-Text to check: """${text}"""`;
+List at most 6 of the most useful corrections, ordered by importance. Be honest but kind in scoring. Text to check: """${text}"""`;
 
   try {
     const response = await callWithRetry(prompt);
@@ -45,6 +50,7 @@ Text to check: """${text}"""`;
 
     const saved = await prisma.entry.create({
       data: {
+        userId,
         prompt: userPrompt || '',
         text,
         rewrite: parsed.rewrite,
@@ -54,14 +60,8 @@ Text to check: """${text}"""`;
     });
 
     return NextResponse.json({ ...parsed, id: saved.id });
-  } catch (err: any) {
-  console.error(err);
-  if (err?.status === 429) {
-    return NextResponse.json(
-      { error: "You've hit the free plan's request limit for now — try again in about a minute." },
-      { status: 429 }
-    );
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'AI check failed' }, { status: 500 });
   }
-  return NextResponse.json({ error: 'Feedback failed' }, { status: 500 });
-}
 }

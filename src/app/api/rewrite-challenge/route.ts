@@ -1,10 +1,15 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
   const { original, userRewrite } = await req.json();
 
   if (!userRewrite || !userRewrite.trim()) {
@@ -33,6 +38,7 @@ List at most 4 corrections. Be honest but kind in scoring.`;
 
     const saved = await prisma.entry.create({
       data: {
+        userId,
         prompt: `Rewrite challenge: "${original}"`,
         text: userRewrite,
         rewrite: parsed.rewrite,

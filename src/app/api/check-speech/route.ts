@@ -1,3 +1,4 @@
+import { auth } from '@/auth';
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
@@ -5,6 +6,9 @@ import prisma from '@/lib/prisma';
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const { audioBase64, mimeType, prompt: userPrompt } = await req.json();
 
     if (!audioBase64) {
@@ -47,6 +51,7 @@ List at most 6 of the most useful corrections. Be honest but kind in scoring.`;
 
         const saved = await prisma.entry.create({
             data: {
+                userId,
                 prompt: userPrompt || '',
                 text: parsed.transcript,
                 rewrite: parsed.rewrite,
