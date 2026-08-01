@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Logo } from '@/components/Logo';
 
 const FEATURES = [
   { icon: '✍️', title: 'Write', desc: 'Daily prompts, graded instantly' },
