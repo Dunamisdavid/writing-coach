@@ -10,6 +10,11 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 export const metadata = {
   title: 'Marginal — Show up. Speak up.',
   description: 'Daily AI-powered English writing and speaking practice.',
+  manifest: '/manifest.webmanifest',
+};
+
+export const viewport = {
+  themeColor: '#7C3AED',
 };
 
 export default function RootLayout({
