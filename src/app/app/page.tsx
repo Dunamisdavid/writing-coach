@@ -72,6 +72,25 @@ function ScoreRing({ label, value, color, delay = 0 }: { label: string; value: n
     );
 }
 
+function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+    return (
+        <div className="flex flex-col items-center text-center py-10 px-4">
+            <span className="text-4xl mb-3 opacity-70">{icon}</span>
+            <p className="font-display font-semibold text-[15px] text-[#1E1B2E] dark:text-violet-50 mb-1">{title}</p>
+            <p className="font-sans text-[13px] text-[#9CA3AF] dark:text-violet-400/50 max-w-[240px]">{subtitle}</p>
+        </div>
+    );
+}
+
+function SkeletonBar({ width = '100%' }: { width?: string }) {
+    return (
+        <div
+            className="h-4 rounded-full bg-violet-100 dark:bg-violet-900/30 animate-pulse"
+            style={{ width }}
+        />
+    );
+}
+
 type Tutor = { id: string; name: string; icon: string; voiceName: string; style: string };
 
 const TUTORS: Tutor[] = [
@@ -163,6 +182,8 @@ export default function Home() {
     const [speakPrompts, setSpeakPrompts] = useState<string[]>([]);
     const [promptLoading, setPromptLoading] = useState(false);
 
+    const [panelDataLoading, setPanelDataLoading] = useState(true);
+
     const [settingsOpen, setSettingsOpen] = useState(false);
 
     const [history, setHistory] = useState<any[]>([]);
@@ -192,6 +213,19 @@ export default function Home() {
         setWeeklyGoal(n);
         localStorage.setItem('weeklyGoal', String(n));
     }
+
+    useEffect(() => {
+        setPanelDataLoading(true);
+        Promise.all([
+            fetch('/api/history').then((r) => r.json()).then(setHistory).catch(() => { }),
+            fetch('/api/mistakes').then((r) => r.json()).then(setMistakes).catch(() => { }),
+            fetch('/api/vocabulary').then((r) => r.json()).then(setVocab).catch(() => { }),
+            fetch('/api/progress').then((r) => r.json()).then(setProgress).catch(() => { }),
+            fetch('/api/streak').then((r) => r.json()).then(setStreak).catch(() => { }),
+            fetch('/api/achievements').then((r) => r.json()).then(setAchievements).catch(() => { }),
+            fetch('/api/weekly-progress').then((r) => r.json()).then((d) => setWeeklyCount(d.count)).catch(() => { }),
+        ]).finally(() => setPanelDataLoading(false));
+    }, [result]);
 
     const [isRecording, setIsRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -798,7 +832,7 @@ export default function Home() {
                         </button>
                     ))}
                 </div>
-
+            <div key={mode} className="animate-[fade-slide-up_0.35s_ease-out]">          
                 {mode === 'write' && (
                     <>
                         <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border border-violet-100 dark:border-violet-800/40">
@@ -1150,7 +1184,7 @@ export default function Home() {
                         </button>
                     </div>
                 )}
-
+            </div>
                 {error && <p className="font-mono text-xs text-rose-500 dark:text-rose-400 mt-4 animate-[fade-slide-up_0.3s_ease-out] break-words">{error}</p>}
 
                 {result && (
@@ -1237,6 +1271,7 @@ export default function Home() {
                 {activePanel === 'goals' && (
                     <div className="mt-6">
                         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ This week's goal</p>
+
                         <div className="bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 rounded-2xl p-4 mb-6">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="font-sans text-[13px] text-[#1E1B2E] dark:text-violet-50">{weeklyCount} / {weeklyGoal} sessions</span>
@@ -1252,91 +1287,160 @@ export default function Home() {
                         </div>
 
                         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ Achievements</p>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                            {achievements?.badges.map((b) => (
-                                <div key={b.id} className={`p-2.5 rounded-xl border text-center transition-all ${b.earned ? 'bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border-violet-200 dark:border-violet-700/40' : 'bg-white/40 dark:bg-black/10 border-violet-50 dark:border-violet-900/30 opacity-50'}`}>
-                                    <span className="text-base block mb-0.5">{b.icon}</span>
-                                    <p className="font-sans text-[10px] font-medium text-[#1E1B2E] dark:text-violet-50">{b.label}</p>
-                                    <p className="font-mono text-[8px] text-[#6B6478] dark:text-violet-300/60 mt-0.5 leading-tight">{b.description}</p>
-                                </div>
-                            ))}
-                        </div>
+
+                        {panelDataLoading ? (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                {Array.from({ length: 7 }).map((_, i) => (
+                                    <div key={i} className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-900/20 animate-pulse h-16" />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                {achievements?.badges.map((b) => (
+                                    <div key={b.id} className={`p-2.5 rounded-xl border text-center transition-all ${b.earned ? 'bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border-violet-200 dark:border-violet-700/40' : 'bg-white/40 dark:bg-black/10 border-violet-50 dark:border-violet-900/30 opacity-50'}`}>
+                                        <span className="text-base block mb-0.5">{b.icon}</span>
+                                        <p className="font-sans text-[10px] font-medium text-[#1E1B2E] dark:text-violet-50">{b.label}</p>
+                                        <p className="font-mono text-[8px] text-[#6B6478] dark:text-violet-300/60 mt-0.5 leading-tight">{b.description}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {activePanel === 'progress' && progress.length > 0 && (
+                {activePanel === 'progress' && (
                     <div className="mt-6">
                         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ Your progress over time</p>
-                        <div className="bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 rounded-2xl p-2 sm:p-4 h-56 sm:h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={progress}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(124,58,237,0.1)" />
-                                    <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6B6478' }} />
-                                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#6B6478' }} width={28} />
-                                    <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #EDE9FE', fontSize: 12 }} />
-                                    <Line type="monotone" dataKey="overall" stroke="#7C3AED" strokeWidth={2.5} dot={{ r: 3 }} name="Overall" />
-                                    <Line type="monotone" dataKey="grammar" stroke="#059669" strokeWidth={1.5} dot={false} name="Grammar" />
-                                    <Line type="monotone" dataKey="vocabulary" stroke="#F59E0B" strokeWidth={1.5} dot={false} name="Vocabulary" />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                        {progress.length < 3 && <p className="font-mono text-[10px] text-[#9CA3AF] dark:text-violet-400/50 mt-3">Keep practicing daily — the trend gets more meaningful with more days of data.</p>}
+                        {panelDataLoading ? (
+                            <div className="h-56 sm:h-64 rounded-2xl bg-violet-50 dark:bg-violet-900/20 animate-pulse" />
+                        ) : progress.length > 0 ? (
+                            <>
+                                <div className="bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 rounded-2xl p-2 sm:p-4 h-56 sm:h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={progress}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(124,58,237,0.1)" />
+                                            <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#6B6478' }} />
+                                            <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#6B6478' }} width={28} />
+                                            <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #EDE9FE', fontSize: 12 }} />
+                                            <Line type="monotone" dataKey="overall" stroke="#7C3AED" strokeWidth={2.5} dot={{ r: 3 }} name="Overall" />
+                                            <Line type="monotone" dataKey="grammar" stroke="#059669" strokeWidth={1.5} dot={false} name="Grammar" />
+                                            <Line type="monotone" dataKey="vocabulary" stroke="#F59E0B" strokeWidth={1.5} dot={false} name="Vocabulary" />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                                {progress.length < 3 && (
+                                    <p className="font-mono text-[10px] text-[#9CA3AF] dark:text-violet-400/50 mt-3">Keep practicing daily — the trend gets more meaningful with more days of data.</p>
+                                )}
+                            </>
+                        ) : (
+                            <EmptyState
+                                icon="📈"
+                                title="Not enough data yet"
+                                subtitle="Practice across a few different days and your progress trend will appear here."
+                            />
+                        )}
                     </div>
                 )}
 
-                {activePanel === 'mistakes' && mistakes.length > 0 && (
-                    <div className="mt-6">
-                        <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ Your recurring mistakes</p>
-                        <div className="space-y-3">
-                            {mistakes.map((m) => {
-                                const max = mistakes[0].count;
-                                const pct = Math.max(8, (m.count / max) * 100);
-                                return (
-                                    <div key={m.tag} className="flex items-center gap-2 sm:gap-3">
-                                        <span className="font-sans text-[12px] sm:text-[13px] text-[#1E1B2E] dark:text-violet-50 w-20 sm:w-28 flex-shrink-0 truncate">{m.tag}</span>
-                                        <div className="flex-1 h-5 sm:h-6 bg-violet-50 dark:bg-violet-900/30 rounded-full overflow-hidden">
-                                            <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 rounded-full flex items-center justify-end pr-2 transition-all duration-700 ease-out" style={{ width: `${pct}%` }}>
-                                                <span className="font-mono text-[9px] sm:text-[10px] text-white font-bold">{m.count}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {activePanel === 'vocabulary' && vocab.length > 0 && (
+                {activePanel === 'vocabulary' && (
                     <div className="mt-6">
                         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ Vocabulary you've upgraded</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
-                            {vocab.map((v, i) => (
-                                <div key={i} className="p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600 hover:scale-[1.03] transition-all">
-                                    <p className="font-sans text-[12px] sm:text-[13px] text-rose-400 line-through">{v.original}</p>
-                                    <p className="font-display font-semibold text-[14px] sm:text-[15px] text-emerald-600 dark:text-emerald-400 mt-0.5">{v.fixed}</p>
-                                    {v.count > 1 && <p className="font-mono text-[9px] sm:text-[9.5px] text-violet-400 dark:text-violet-500 mt-2">used {v.count}×</p>}
-                                </div>
-                            ))}
-                        </div>
+                        {panelDataLoading ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <div key={i} className="p-3 sm:p-4 rounded-2xl bg-violet-50 dark:bg-violet-900/20 animate-pulse h-[72px]" />
+                                ))}
+                            </div>
+                        ) : vocab.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                                {vocab.map((v, i) => (
+                                    <div key={i} className="p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600 hover:scale-[1.03] transition-all">
+                                        <p className="font-sans text-[12px] sm:text-[13px] text-rose-400 line-through">{v.original}</p>
+                                        <p className="font-display font-semibold text-[14px] sm:text-[15px] text-emerald-600 dark:text-emerald-400 mt-0.5">{v.fixed}</p>
+                                        {v.count > 1 && <p className="font-mono text-[9px] sm:text-[9.5px] text-violet-400 dark:text-violet-500 mt-2">used {v.count}×</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <EmptyState
+                                icon="📚"
+                                title="Nothing to show yet"
+                                subtitle="Word upgrades from your writing and speaking sessions will collect here over time."
+                            />
+                        )}
                     </div>
                 )}
 
-                {activePanel === 'history' && history.length > 0 && (
+                {activePanel === 'history' && (
                     <div className="mt-6">
                         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ Your history</p>
-                        <div className="space-y-2">
-                            {history.map((entry) => (
-                                <div key={entry.id} className="flex items-center justify-between gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-xl bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600 transition-colors">
-                                    <div className="min-w-0 flex-1">
-                                        <p className="font-sans text-[13px] sm:text-[13.5px] text-[#1E1B2E] dark:text-violet-50 truncate">{entry.text}</p>
-                                        <p className="font-mono text-[9.5px] sm:text-[10px] text-[#9CA3AF] dark:text-violet-400/50 mt-1">
-                                            {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                        </p>
+                        {panelDataLoading ? (
+                            <div className="space-y-2">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <div key={i} className="h-[52px] rounded-xl bg-violet-50 dark:bg-violet-900/20 animate-pulse" />
+                                ))}
+                            </div>
+                        ) : history.length > 0 ? (
+                            <div className="space-y-2">
+                                {history.map((entry) => (
+                                    <div key={entry.id} className="flex items-center justify-between gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-xl bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600 transition-colors">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-sans text-[13px] sm:text-[13.5px] text-[#1E1B2E] dark:text-violet-50 truncate">{entry.text}</p>
+                                            <p className="font-mono text-[9.5px] sm:text-[10px] text-[#9CA3AF] dark:text-violet-400/50 mt-1">
+                                                {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </div>
+                                        <div className="flex-shrink-0 font-display font-bold text-base sm:text-lg text-violet-600 dark:text-violet-400">{entry.scores?.overall ?? '—'}</div>
                                     </div>
-                                    <div className="flex-shrink-0 font-display font-bold text-base sm:text-lg text-violet-600 dark:text-violet-400">{entry.scores?.overall ?? '—'}</div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <EmptyState
+                                icon="📝"
+                                title="Your journey starts here"
+                                subtitle="Every check you complete gets saved — come back after your first session to see it."
+                            />
+                        )}
+                    </div>
+                )}
+
+                {activePanel === 'mistakes' && (
+                    <div className="mt-6">
+                        <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">✦ Your recurring mistakes</p>
+                        {panelDataLoading ? (
+                            <div className="space-y-3">
+                                {[100, 80, 60, 40].map((w, i) => (
+                                    <div key={i} className="flex items-center gap-3">
+                                        <SkeletonBar width="80px" />
+                                        <div className="flex-1"><SkeletonBar width={`${w}%`} /></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : mistakes.length > 0 ? (
+                            <div className="space-y-3">
+                                {mistakes.map((m) => {
+                                    const max = mistakes[0].count;
+                                    const pct = Math.max(8, (m.count / max) * 100);
+                                    return (
+                                        <div key={m.tag} className="flex items-center gap-2 sm:gap-3">
+                                            <span className="font-sans text-[12px] sm:text-[13px] text-[#1E1B2E] dark:text-violet-50 w-20 sm:w-28 flex-shrink-0 truncate">{m.tag}</span>
+                                            <div className="flex-1 h-5 sm:h-6 bg-violet-50 dark:bg-violet-900/30 rounded-full overflow-hidden">
+                                                <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-400 rounded-full flex items-center justify-end pr-2 transition-all duration-700 ease-out" style={{ width: `${pct}%` }}>
+                                                    <span className="font-mono text-[9px] sm:text-[10px] text-white font-bold">{m.count}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <EmptyState
+                                icon="🎯"
+                                title="No patterns yet"
+                                subtitle="Once you've done a few sessions, your most common mistakes will show up here."
+                            />
+                        )}
+
                     </div>
                 )}
             </div>
