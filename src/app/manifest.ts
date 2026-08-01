@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Marginal — Show up. Speak up.',
-    short_name: 'Marginal',
-    description: 'Daily AI-powered English writing and speaking practice.',
+    name: 'UNSILENT — Find Your Voice. Share Your Wisdom',
+    short_name: 'UNSILENT',
+    description: 'Daily AI-powered English writing and speaking practice, powered by Wisdom Corner.',
     start_url: '/app',
     display: 'standalone',
     background_color: '#F5F3FF',

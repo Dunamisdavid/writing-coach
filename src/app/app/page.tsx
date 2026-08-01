@@ -478,6 +478,36 @@ export default function Home() {
         setCustomScenario('');
     }
 
+    function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+        const dims = {
+            sm: { bars: [8, 14, 10], barW: 2.5, gap: 2, h: 18, un: 'text-lg', silent: 'text-[10px]' },
+            md: { bars: [10, 18, 13], barW: 3, gap: 2.5, h: 22, un: 'text-2xl', silent: 'text-xs' },
+            lg: { bars: [16, 30, 22], barW: 5, gap: 4, h: 36, un: 'text-4xl sm:text-5xl', silent: 'text-base sm:text-lg' },
+        }[size];
+
+        return (
+            <div className="flex items-center gap-2">
+                <div className="flex items-end" style={{ gap: dims.gap, height: dims.h }}>
+                    {dims.bars.map((h, i) => (
+                        <div
+                            key={i}
+                            className="rounded-full bg-gradient-to-t from-violet-600 to-fuchsia-500"
+                            style={{ width: dims.barW, height: h }}
+                        />
+                    ))}
+                </div>
+                <div className="flex items-baseline gap-1">
+                    <span className={`font-display font-extrabold ${dims.un} bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-transparent tracking-tight`}>
+                        UN
+                    </span>
+                    <span className={`font-display font-medium ${dims.silent} text-[#9CA3AF] dark:text-violet-400/60 tracking-widest uppercase`}>
+                        silent
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
     async function sendChatMessage() {
         const content = chatInput.trim();
         if (!content || !scenario) return;
@@ -773,11 +803,12 @@ export default function Home() {
             <div className="pointer-events-none absolute bottom-0 left-1/4 w-72 h-72 rounded-full bg-amber-200/30 dark:bg-amber-700/10 blur-3xl animate-[blob-float_17s_ease-in-out_infinite]" />
 
             <div className="relative w-full max-w-2xl bg-white/70 dark:bg-[#1A1530]/80 backdrop-blur-xl rounded-2xl sm:rounded-[28px] shadow-[0_20px_60px_-15px_rgba(76,29,149,0.35)] border border-white/60 dark:border-violet-900/40 px-5 py-6 sm:px-14 sm:py-12">
-                <p className="font-mono text-[10px] sm:text-[11px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-2">
-                    ✦ Marginal · Daily Practice
-                </p>
                 <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-                    <h1 className="font-display font-bold text-2xl sm:text-4xl text-[#1E1B2E] dark:text-white tracking-tight">Show up. Speak up.</h1>
+                    <div>
+                        <Logo size="md" />
+                        <p className="font-mono text-[9px] tracking-widest uppercase text-violet-400 dark:text-violet-500/60 mt-1">Powered by Wisdom Corner</p>
+                    </div>
+
                     <div className="flex items-center gap-2">
                         {streak && streak.streak > 0 && (
                             <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-800/40 rounded-full px-2 py-1 sm:px-3.5 sm:py-1.5">
@@ -815,6 +846,7 @@ export default function Home() {
                             )}
                         </div>
                     </div>
+
                 </div>
                 <p className="text-[13.5px] sm:text-[15px] text-[#6B6478] dark:text-violet-300/70 mb-5 sm:mb-6">
                     Write, speak, or talk it out. I'll light up what's working and fix what's not.
@@ -832,359 +864,359 @@ export default function Home() {
                         </button>
                     ))}
                 </div>
-            <div key={mode} className="animate-[fade-slide-up_0.35s_ease-out]">          
-                {mode === 'write' && (
-                    <>
-                        <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border border-violet-100 dark:border-violet-800/40">
-                            <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Prompt</p>
-                            <p className="font-display text-base sm:text-lg text-[#1E1B2E] dark:text-violet-50 mt-1.5 leading-snug">{prompt}</p>
-                            <button onClick={newPrompt} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-100 mt-3 cursor-pointer transition-colors inline-flex items-center gap-1 disabled:opacity-40">
-                                {promptLoading ? '✦ thinking…' : '↻ shuffle prompt'}
-                            </button>
-                        </div>
-                        <textarea
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                            placeholder="Start writing here..."
-                            className="w-full min-h-[120px] sm:min-h-[140px] bg-white/60 dark:bg-black/20 rounded-2xl border border-violet-100 dark:border-violet-800/40 p-3.5 sm:p-4 font-sans text-[15px] sm:text-[16px] leading-relaxed text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent resize-y transition-shadow"
-                        />
-                        <div className="flex justify-end mt-4 sm:mt-5">
-                            <button
-                                onClick={handleSubmit}
-                                disabled={loading || !text.trim()}
-                                className="relative font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto
+                <div key={mode} className="animate-[fade-slide-up_0.35s_ease-out]">
+                    {mode === 'write' && (
+                        <>
+                            <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border border-violet-100 dark:border-violet-800/40">
+                                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Prompt</p>
+                                <p className="font-display text-base sm:text-lg text-[#1E1B2E] dark:text-violet-50 mt-1.5 leading-snug">{prompt}</p>
+                                <button onClick={newPrompt} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-100 mt-3 cursor-pointer transition-colors inline-flex items-center gap-1 disabled:opacity-40">
+                                    {promptLoading ? '✦ thinking…' : '↻ shuffle prompt'}
+                                </button>
+                            </div>
+                            <textarea
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                placeholder="Start writing here..."
+                                className="w-full min-h-[120px] sm:min-h-[140px] bg-white/60 dark:bg-black/20 rounded-2xl border border-violet-100 dark:border-violet-800/40 p-3.5 sm:p-4 font-sans text-[15px] sm:text-[16px] leading-relaxed text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent resize-y transition-shadow"
+                            />
+                            <div className="flex justify-end mt-4 sm:mt-5">
+                                <button
+                                    onClick={handleSubmit}
+                                    disabled={loading || !text.trim()}
+                                    className="relative font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto
                            bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 disabled:cursor-default
                            shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-[1.03] active:scale-[0.98]
                            transition-all duration-200"
-                            >
-                                {loading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-[spin-slow_0.7s_linear_infinite]" />
-                                        Reading closely
-                                    </span>
-                                ) : 'Check my writing'}
-                            </button>
-                        </div>
-                    </>
-                )}
-
-                {mode === 'speak' && (
-                    <>
-                        <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border border-violet-100 dark:border-violet-800/40">
-                            <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Speaking topic</p>
-                            <p className="font-display text-base sm:text-lg text-[#1E1B2E] dark:text-violet-50 mt-1.5 leading-snug">{prompt}</p>
-                            <button onClick={newPrompt} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-100 mt-3 cursor-pointer transition-colors inline-flex items-center gap-1 disabled:opacity-40">
-                                {promptLoading ? '✦ thinking…' : '↻ shuffle topic'}
-                            </button>
-                        </div>
-                        <div className="mb-2">
-                            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                                <button
-                                    onClick={isRecording ? stopRecording : startRecording}
-                                    className={`font-mono text-xs uppercase px-5 sm:px-6 py-3 sm:py-3.5 rounded-full cursor-pointer transition-all
-                    ${isRecording ? 'bg-rose-500 animate-pulse' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500'} text-white`}
                                 >
-                                    {isRecording ? '● Stop recording' : '🎤 Start recording'}
+                                    {loading ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-[spin-slow_0.7s_linear_infinite]" />
+                                            Reading closely
+                                        </span>
+                                    ) : 'Check my writing'}
                                 </button>
-                                {audioUrl && <audio src={audioUrl} controls className="h-9 max-w-full" />}
                             </div>
-                            {audioUrl && (
-                                <div className="flex justify-end mt-5">
+                        </>
+                    )}
+
+                    {mode === 'speak' && (
+                        <>
+                            <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border border-violet-100 dark:border-violet-800/40">
+                                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Speaking topic</p>
+                                <p className="font-display text-base sm:text-lg text-[#1E1B2E] dark:text-violet-50 mt-1.5 leading-snug">{prompt}</p>
+                                <button onClick={newPrompt} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-100 mt-3 cursor-pointer transition-colors inline-flex items-center gap-1 disabled:opacity-40">
+                                    {promptLoading ? '✦ thinking…' : '↻ shuffle topic'}
+                                </button>
+                            </div>
+                            <div className="mb-2">
+                                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                                     <button
-                                        onClick={handleSpeakSubmit}
-                                        disabled={loading}
-                                        className="font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto
+                                        onClick={isRecording ? stopRecording : startRecording}
+                                        className={`font-mono text-xs uppercase px-5 sm:px-6 py-3 sm:py-3.5 rounded-full cursor-pointer transition-all
+                    ${isRecording ? 'bg-rose-500 animate-pulse' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500'} text-white`}
+                                    >
+                                        {isRecording ? '● Stop recording' : '🎤 Start recording'}
+                                    </button>
+                                    {audioUrl && <audio src={audioUrl} controls className="h-9 max-w-full" />}
+                                </div>
+                                {audioUrl && (
+                                    <div className="flex justify-end mt-5">
+                                        <button
+                                            onClick={handleSpeakSubmit}
+                                            disabled={loading}
+                                            className="font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto
                                bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40
                                shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200"
-                                    >
-                                        {loading ? 'Listening closely…' : 'Check my speaking'}
+                                        >
+                                            {loading ? 'Listening closely…' : 'Check my speaking'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {mode === 'talk' && (
+                        <>
+                            {!scenario ? (
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Pick a scenario</p>
+                                        <button
+                                            onClick={loadScenarios}
+                                            disabled={scenariosLoading}
+                                            className="font-mono text-[10px] text-violet-500 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-200 cursor-pointer disabled:opacity-40"
+                                        >
+                                            {scenariosLoading ? 'thinking…' : '🔀 new scenarios'}
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+                                        {scenarioOptions.map((s, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => startScenario(s)}
+                                                className="flex flex-col items-center gap-1.5 p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600 hover:scale-[1.05] transition-all cursor-pointer"
+                                            >
+                                                <span className="text-lg sm:text-xl">{s.icon}</span>
+                                                <span className="font-sans text-[10px] sm:text-[11px] text-[#1E1B2E] dark:text-violet-50 text-center leading-tight">{s.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            value={customScenario}
+                                            onChange={(e) => setCustomScenario(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && startCustomScenario()}
+                                            placeholder="...or describe your own scenario"
+                                            className="flex-1 min-w-0 bg-white/60 dark:bg-black/20 rounded-full border border-violet-100 dark:border-violet-800/40 px-4 py-2.5 font-sans text-[13px] text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                                        />
+                                        <button
+                                            onClick={startCustomScenario}
+                                            disabled={!customScenario.trim()}
+                                            className="font-mono text-xs uppercase px-4 py-2.5 rounded-full cursor-pointer bg-violet-600 text-white disabled:opacity-40 flex-shrink-0"
+                                        >
+                                            Go
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mb-4">
+                                    <div className="flex items-center justify-between mb-3 gap-2">
+                                        <span className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 truncate">
+                                            {scenario.icon} {scenario.label}
+                                        </span>
+                                        <button
+                                            onClick={() => { setScenario(null); setMessages([]); }}
+                                            className="font-mono text-[10px] text-violet-400 dark:text-violet-500 hover:text-violet-600 dark:hover:text-violet-300 cursor-pointer flex-shrink-0"
+                                        >
+                                            change scenario
+                                        </button>
+                                    </div>
+
+                                    <div className="bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 rounded-2xl p-3 sm:p-4 h-64 sm:h-72 overflow-y-auto mb-3 flex flex-col gap-3">
+                                        {messages.length === 0 && (
+                                            <p className="font-sans text-[13px] sm:text-[13.5px] text-[#9CA3AF] dark:text-violet-400/50 italic m-auto text-center px-4">
+                                                Say hello to start the conversation.
+                                            </p>
+                                        )}
+                                        {messages.map((m, i) => (
+                                            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                <div
+                                                    className={`max-w-[85%] sm:max-w-[80%] px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-[13.5px] sm:text-[14px] font-sans leading-relaxed ${m.role === 'user'
+                                                        ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white rounded-br-sm'
+                                                        : 'bg-violet-50 dark:bg-violet-900/30 text-[#1E1B2E] dark:text-violet-50 rounded-bl-sm'
+                                                        }`}
+                                                >
+                                                    {m.content}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {chatLoading && (
+                                            <div className="flex justify-start">
+                                                <div className="bg-violet-50 dark:bg-violet-900/30 px-4 py-2.5 rounded-2xl rounded-bl-sm">
+                                                    <span className="w-2 h-2 bg-violet-400 rounded-full inline-block animate-pulse" />
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div ref={chatEndRef} />
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <input
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && !chatLoading && sendChatMessage()}
+                                            placeholder="Type your reply..."
+                                            className="flex-1 min-w-0 bg-white/60 dark:bg-black/20 rounded-full border border-violet-100 dark:border-violet-800/40 px-4 py-2.5 font-sans text-[14px] text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400"
+                                        />
+                                        <button
+                                            onClick={sendChatMessage}
+                                            disabled={chatLoading || !chatInput.trim()}
+                                            className="font-mono text-xs uppercase px-4 sm:px-5 py-2.5 rounded-full cursor-pointer bg-violet-600 text-white disabled:opacity-40 flex-shrink-0"
+                                        >
+                                            Send
+                                        </button>
+                                    </div>
+
+                                    {messages.filter((m) => m.role === 'user').length >= 2 && (
+                                        <div className="flex justify-end mt-4">
+                                            <button
+                                                onClick={endConversation}
+                                                disabled={loading}
+                                                className="font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto
+                                 bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40
+                                 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200"
+                                            >
+                                                {loading ? 'Reviewing…' : 'End & get feedback'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    {mode === 'drill' && (
+                        <div className="mb-4">
+                            {drillQuestions.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">
+                                        Five questions, built around the tense mistakes you actually make.
+                                    </p>
+                                    <button onClick={startDrill} disabled={drillLoading} className="font-mono text-xs tracking-wider uppercase text-white px-6 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200">
+                                        {drillLoading ? 'Building your drill…' : 'Start drill'}
                                     </button>
+                                </div>
+                            ) : drillIndex >= drillQuestions.length ? (
+                                <div className="text-center py-8 animate-[fade-slide-up_0.4s_ease-out]">
+                                    <p className="font-display font-bold text-3xl text-violet-600 dark:text-violet-400 mb-2">{drillScore} / {drillQuestions.length}</p>
+                                    <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">Nice work — want another round?</p>
+                                    <button onClick={startDrill} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">New drill</button>
+                                </div>
+                            ) : (
+                                <div className="animate-[fade-slide-up_0.3s_ease-out]">
+                                    <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-2">Question {drillIndex + 1} of {drillQuestions.length}</p>
+                                    <p className="font-display text-lg sm:text-xl text-[#1E1B2E] dark:text-violet-50 mb-5 leading-snug">{drillQuestions[drillIndex].sentence}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                                        {drillQuestions[drillIndex].options.map((opt, i) => {
+                                            const q = drillQuestions[drillIndex];
+                                            const isCorrect = i === q.correctIndex;
+                                            const isPicked = i === selectedOption;
+                                            let style = 'bg-white/60 dark:bg-black/20 border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600';
+                                            if (selectedOption !== null) {
+                                                if (isCorrect) style = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400';
+                                                else if (isPicked) style = 'bg-rose-50 dark:bg-rose-900/20 border-rose-300';
+                                                else style = 'bg-white/40 dark:bg-black/10 border-violet-50 dark:border-violet-900/30 opacity-60';
+                                            }
+                                            return (
+                                                <button key={i} onClick={() => selectAnswer(i)} disabled={selectedOption !== null} className={`font-sans text-[14px] text-[#1E1B2E] dark:text-violet-50 text-left px-4 py-3 rounded-xl border transition-all cursor-pointer ${style}`}>
+                                                    {opt}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {selectedOption !== null && (
+                                        <div className="animate-[fade-slide-up_0.3s_ease-out]">
+                                            <p className="font-sans text-[13.5px] text-[#6B6478] dark:text-violet-300/70 mb-4">{drillQuestions[drillIndex].explanation}</p>
+                                            <button onClick={nextQuestion} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">
+                                                {drillIndex + 1 === drillQuestions.length ? 'See results' : 'Next question'}
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
-                    </>
-                )}
+                    )}
 
-                {mode === 'talk' && (
-                    <>
-                        {!scenario ? (
-                            <div className="mb-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Pick a scenario</p>
-                                    <button
-                                        onClick={loadScenarios}
-                                        disabled={scenariosLoading}
-                                        className="font-mono text-[10px] text-violet-500 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-200 cursor-pointer disabled:opacity-40"
-                                    >
-                                        {scenariosLoading ? 'thinking…' : '🔀 new scenarios'}
+                    {mode === 'idiom' && (
+                        <div className="mb-4">
+                            {idiomQuestions.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">Five questions on idioms and expressions native speakers use every day.</p>
+                                    <button onClick={startIdiomDrill} disabled={idiomLoading} className="font-mono text-xs tracking-wider uppercase text-white px-7 py-3.5 rounded-full cursor-pointer bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200">
+                                        {idiomLoading ? 'Building your drill…' : 'Start drill'}
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
-                                    {scenarioOptions.map((s, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => startScenario(s)}
-                                            className="flex flex-col items-center gap-1.5 p-2.5 sm:p-3 rounded-xl bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 border border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600 hover:scale-[1.05] transition-all cursor-pointer"
-                                        >
-                                            <span className="text-lg sm:text-xl">{s.icon}</span>
-                                            <span className="font-sans text-[10px] sm:text-[11px] text-[#1E1B2E] dark:text-violet-50 text-center leading-tight">{s.label}</span>
-                                        </button>
-                                    ))}
+                            ) : idiomIndex >= idiomQuestions.length ? (
+                                <div className="text-center py-8 animate-[fade-slide-up_0.4s_ease-out]">
+                                    <p className="font-display font-bold text-3xl text-violet-600 dark:text-violet-400 mb-2">{idiomScore} / {idiomQuestions.length}</p>
+                                    <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">Nice work — want another round?</p>
+                                    <button onClick={startIdiomDrill} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">New drill</button>
                                 </div>
-                                <div className="flex gap-2">
-                                    <input
-                                        value={customScenario}
-                                        onChange={(e) => setCustomScenario(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && startCustomScenario()}
-                                        placeholder="...or describe your own scenario"
-                                        className="flex-1 min-w-0 bg-white/60 dark:bg-black/20 rounded-full border border-violet-100 dark:border-violet-800/40 px-4 py-2.5 font-sans text-[13px] text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400"
-                                    />
-                                    <button
-                                        onClick={startCustomScenario}
-                                        disabled={!customScenario.trim()}
-                                        className="font-mono text-xs uppercase px-4 py-2.5 rounded-full cursor-pointer bg-violet-600 text-white disabled:opacity-40 flex-shrink-0"
-                                    >
-                                        Go
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="mb-4">
-                                <div className="flex items-center justify-between mb-3 gap-2">
-                                    <span className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 truncate">
-                                        {scenario.icon} {scenario.label}
-                                    </span>
-                                    <button
-                                        onClick={() => { setScenario(null); setMessages([]); }}
-                                        className="font-mono text-[10px] text-violet-400 dark:text-violet-500 hover:text-violet-600 dark:hover:text-violet-300 cursor-pointer flex-shrink-0"
-                                    >
-                                        change scenario
-                                    </button>
-                                </div>
-
-                                <div className="bg-white/60 dark:bg-black/20 border border-violet-100 dark:border-violet-800/40 rounded-2xl p-3 sm:p-4 h-64 sm:h-72 overflow-y-auto mb-3 flex flex-col gap-3">
-                                    {messages.length === 0 && (
-                                        <p className="font-sans text-[13px] sm:text-[13.5px] text-[#9CA3AF] dark:text-violet-400/50 italic m-auto text-center px-4">
-                                            Say hello to start the conversation.
-                                        </p>
+                            ) : (
+                                <div className="animate-[fade-slide-up_0.3s_ease-out]">
+                                    <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-2">Question {idiomIndex + 1} of {idiomQuestions.length}</p>
+                                    <p className="font-display text-lg sm:text-xl text-[#1E1B2E] dark:text-violet-50 mb-5 leading-snug">{idiomQuestions[idiomIndex].sentence}</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+                                        {idiomQuestions[idiomIndex].options.map((opt, i) => {
+                                            const q = idiomQuestions[idiomIndex];
+                                            const isCorrect = i === q.correctIndex;
+                                            const isPicked = i === idiomSelected;
+                                            let style = 'bg-white/60 dark:bg-black/20 border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600';
+                                            if (idiomSelected !== null) {
+                                                if (isCorrect) style = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400';
+                                                else if (isPicked) style = 'bg-rose-50 dark:bg-rose-900/20 border-rose-300';
+                                                else style = 'bg-white/40 dark:bg-black/10 border-violet-50 dark:border-violet-900/30 opacity-60';
+                                            }
+                                            return (
+                                                <button key={i} onClick={() => selectIdiomAnswer(i)} disabled={idiomSelected !== null} className={`font-sans text-[14px] text-[#1E1B2E] dark:text-violet-50 text-left px-4 py-3 rounded-xl border transition-all cursor-pointer ${style}`}>
+                                                    {opt}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {idiomSelected !== null && (
+                                        <div className="animate-[fade-slide-up_0.3s_ease-out]">
+                                            <p className="font-sans text-[13.5px] text-[#6B6478] dark:text-violet-300/70 mb-4">{idiomQuestions[idiomIndex].explanation}</p>
+                                            <button onClick={nextIdiomQuestion} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">
+                                                {idiomIndex + 1 === idiomQuestions.length ? 'See results' : 'Next question'}
+                                            </button>
+                                        </div>
                                     )}
-                                    {messages.map((m, i) => (
-                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                            <div
-                                                className={`max-w-[85%] sm:max-w-[80%] px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-[13.5px] sm:text-[14px] font-sans leading-relaxed ${m.role === 'user'
-                                                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white rounded-br-sm'
-                                                    : 'bg-violet-50 dark:bg-violet-900/30 text-[#1E1B2E] dark:text-violet-50 rounded-bl-sm'
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {mode === 'rewrite' && (
+                        <div className="mb-4">
+                            <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 border border-violet-100 dark:border-violet-800/40">
+                                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Make this professional</p>
+                                <p className="font-display text-base sm:text-lg text-[#1E1B2E] dark:text-violet-50 mt-1.5 italic leading-snug">"{rewriteSentence}"</p>
+                                <button onClick={newRewriteSentence} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-100 mt-3 cursor-pointer inline-flex items-center gap-1 disabled:opacity-40">
+                                    {promptLoading ? '✦ thinking…' : '↻ new sentence'}
+                                </button>
+                            </div>
+                            <textarea
+                                value={userRewrite}
+                                onChange={(e) => setUserRewrite(e.target.value)}
+                                placeholder="Your professional rewrite..."
+                                className="w-full min-h-[90px] sm:min-h-[100px] bg-white/60 dark:bg-black/20 rounded-2xl border border-violet-100 dark:border-violet-800/40 p-3.5 sm:p-4 font-sans text-[15px] sm:text-[16px] leading-relaxed text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400 resize-y"
+                            />
+                            <div className="flex justify-end mt-4 sm:mt-5">
+                                <button onClick={submitRewrite} disabled={loading || !userRewrite.trim()} className="font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200">
+                                    {loading ? 'Comparing…' : 'Compare my rewrite'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {mode === 'live' && (
+                        <div className="text-center py-6">
+                            {!liveActive && (
+                                <>
+                                    <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">Choose your tutor</p>
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mb-6">
+                                        {TUTORS.map((t) => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => setSelectedTutor(t)}
+                                                className={`flex flex-col items-center gap-1 p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer ${selectedTutor.id === t.id
+                                                    ? 'bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-800/40 dark:to-fuchsia-800/40 border-violet-400'
+                                                    : 'bg-white/60 dark:bg-black/20 border-violet-100 dark:border-violet-800/40 hover:border-violet-300'
                                                     }`}
                                             >
-                                                {m.content}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {chatLoading && (
-                                        <div className="flex justify-start">
-                                            <div className="bg-violet-50 dark:bg-violet-900/30 px-4 py-2.5 rounded-2xl rounded-bl-sm">
-                                                <span className="w-2 h-2 bg-violet-400 rounded-full inline-block animate-pulse" />
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div ref={chatEndRef} />
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <input
-                                        value={chatInput}
-                                        onChange={(e) => setChatInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && !chatLoading && sendChatMessage()}
-                                        placeholder="Type your reply..."
-                                        className="flex-1 min-w-0 bg-white/60 dark:bg-black/20 rounded-full border border-violet-100 dark:border-violet-800/40 px-4 py-2.5 font-sans text-[14px] text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400"
-                                    />
-                                    <button
-                                        onClick={sendChatMessage}
-                                        disabled={chatLoading || !chatInput.trim()}
-                                        className="font-mono text-xs uppercase px-4 sm:px-5 py-2.5 rounded-full cursor-pointer bg-violet-600 text-white disabled:opacity-40 flex-shrink-0"
-                                    >
-                                        Send
-                                    </button>
-                                </div>
-
-                                {messages.filter((m) => m.role === 'user').length >= 2 && (
-                                    <div className="flex justify-end mt-4">
-                                        <button
-                                            onClick={endConversation}
-                                            disabled={loading}
-                                            className="font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto
-                                 bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40
-                                 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200"
-                                        >
-                                            {loading ? 'Reviewing…' : 'End & get feedback'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </>
-                )}
-
-                {mode === 'drill' && (
-                    <div className="mb-4">
-                        {drillQuestions.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">
-                                    Five questions, built around the tense mistakes you actually make.
-                                </p>
-                                <button onClick={startDrill} disabled={drillLoading} className="font-mono text-xs tracking-wider uppercase text-white px-6 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200">
-                                    {drillLoading ? 'Building your drill…' : 'Start drill'}
-                                </button>
-                            </div>
-                        ) : drillIndex >= drillQuestions.length ? (
-                            <div className="text-center py-8 animate-[fade-slide-up_0.4s_ease-out]">
-                                <p className="font-display font-bold text-3xl text-violet-600 dark:text-violet-400 mb-2">{drillScore} / {drillQuestions.length}</p>
-                                <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">Nice work — want another round?</p>
-                                <button onClick={startDrill} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">New drill</button>
-                            </div>
-                        ) : (
-                            <div className="animate-[fade-slide-up_0.3s_ease-out]">
-                                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-2">Question {drillIndex + 1} of {drillQuestions.length}</p>
-                                <p className="font-display text-lg sm:text-xl text-[#1E1B2E] dark:text-violet-50 mb-5 leading-snug">{drillQuestions[drillIndex].sentence}</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-                                    {drillQuestions[drillIndex].options.map((opt, i) => {
-                                        const q = drillQuestions[drillIndex];
-                                        const isCorrect = i === q.correctIndex;
-                                        const isPicked = i === selectedOption;
-                                        let style = 'bg-white/60 dark:bg-black/20 border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600';
-                                        if (selectedOption !== null) {
-                                            if (isCorrect) style = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400';
-                                            else if (isPicked) style = 'bg-rose-50 dark:bg-rose-900/20 border-rose-300';
-                                            else style = 'bg-white/40 dark:bg-black/10 border-violet-50 dark:border-violet-900/30 opacity-60';
-                                        }
-                                        return (
-                                            <button key={i} onClick={() => selectAnswer(i)} disabled={selectedOption !== null} className={`font-sans text-[14px] text-[#1E1B2E] dark:text-violet-50 text-left px-4 py-3 rounded-xl border transition-all cursor-pointer ${style}`}>
-                                                {opt}
+                                                <span className="text-base">{t.icon}</span>
+                                                <span className="font-sans text-[10px] font-medium text-[#1E1B2E] dark:text-violet-50">{t.name}</span>
                                             </button>
-                                        );
-                                    })}
-                                </div>
-                                {selectedOption !== null && (
-                                    <div className="animate-[fade-slide-up_0.3s_ease-out]">
-                                        <p className="font-sans text-[13.5px] text-[#6B6478] dark:text-violet-300/70 mb-4">{drillQuestions[drillIndex].explanation}</p>
-                                        <button onClick={nextQuestion} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">
-                                            {drillIndex + 1 === drillQuestions.length ? 'See results' : 'Next question'}
-                                        </button>
+                                        ))}
                                     </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {mode === 'idiom' && (
-                    <div className="mb-4">
-                        {idiomQuestions.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">Five questions on idioms and expressions native speakers use every day.</p>
-                                <button onClick={startIdiomDrill} disabled={idiomLoading} className="font-mono text-xs tracking-wider uppercase text-white px-7 py-3.5 rounded-full cursor-pointer bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200">
-                                    {idiomLoading ? 'Building your drill…' : 'Start drill'}
-                                </button>
-                            </div>
-                        ) : idiomIndex >= idiomQuestions.length ? (
-                            <div className="text-center py-8 animate-[fade-slide-up_0.4s_ease-out]">
-                                <p className="font-display font-bold text-3xl text-violet-600 dark:text-violet-400 mb-2">{idiomScore} / {idiomQuestions.length}</p>
-                                <p className="font-sans text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5">Nice work — want another round?</p>
-                                <button onClick={startIdiomDrill} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">New drill</button>
-                            </div>
-                        ) : (
-                            <div className="animate-[fade-slide-up_0.3s_ease-out]">
-                                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-2">Question {idiomIndex + 1} of {idiomQuestions.length}</p>
-                                <p className="font-display text-lg sm:text-xl text-[#1E1B2E] dark:text-violet-50 mb-5 leading-snug">{idiomQuestions[idiomIndex].sentence}</p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
-                                    {idiomQuestions[idiomIndex].options.map((opt, i) => {
-                                        const q = idiomQuestions[idiomIndex];
-                                        const isCorrect = i === q.correctIndex;
-                                        const isPicked = i === idiomSelected;
-                                        let style = 'bg-white/60 dark:bg-black/20 border-violet-100 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-600';
-                                        if (idiomSelected !== null) {
-                                            if (isCorrect) style = 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-400';
-                                            else if (isPicked) style = 'bg-rose-50 dark:bg-rose-900/20 border-rose-300';
-                                            else style = 'bg-white/40 dark:bg-black/10 border-violet-50 dark:border-violet-900/30 opacity-60';
-                                        }
-                                        return (
-                                            <button key={i} onClick={() => selectIdiomAnswer(i)} disabled={idiomSelected !== null} className={`font-sans text-[14px] text-[#1E1B2E] dark:text-violet-50 text-left px-4 py-3 rounded-xl border transition-all cursor-pointer ${style}`}>
-                                                {opt}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                {idiomSelected !== null && (
-                                    <div className="animate-[fade-slide-up_0.3s_ease-out]">
-                                        <p className="font-sans text-[13.5px] text-[#6B6478] dark:text-violet-300/70 mb-4">{idiomQuestions[idiomIndex].explanation}</p>
-                                        <button onClick={nextIdiomQuestion} className="font-mono text-xs uppercase px-6 py-3 rounded-full cursor-pointer bg-violet-600 text-white">
-                                            {idiomIndex + 1 === idiomQuestions.length ? 'See results' : 'Next question'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {mode === 'rewrite' && (
-                    <div className="mb-4">
-                        <div className="relative bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-900/20 dark:to-fuchsia-900/20 rounded-2xl p-4 sm:p-5 mb-5 border border-violet-100 dark:border-violet-800/40">
-                            <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400">Make this professional</p>
-                            <p className="font-display text-base sm:text-lg text-[#1E1B2E] dark:text-violet-50 mt-1.5 italic leading-snug">"{rewriteSentence}"</p>
-                            <button onClick={newRewriteSentence} disabled={promptLoading} className="font-mono text-[11px] text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-100 mt-3 cursor-pointer inline-flex items-center gap-1 disabled:opacity-40">
-                                {promptLoading ? '✦ thinking…' : '↻ new sentence'}
+                                </>
+                            )}
+                            <p className="font-sans text-[13.5px] sm:text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5 px-2">
+                                {liveActive ? `🎙️ Live with ${selectedTutor.name} — just talk naturally.` : `Start a real-time spoken conversation with ${selectedTutor.name}.`}
+                            </p>
+                            <button
+                                onClick={liveActive ? stopLiveSession : startLiveSession}
+                                className={`font-mono text-xs uppercase px-6 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer transition-all ${liveActive ? 'bg-rose-500 animate-pulse text-white' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white'
+                                    }`}
+                            >
+                                {liveActive ? '● End conversation' : 'Start conversation'}
                             </button>
                         </div>
-                        <textarea
-                            value={userRewrite}
-                            onChange={(e) => setUserRewrite(e.target.value)}
-                            placeholder="Your professional rewrite..."
-                            className="w-full min-h-[90px] sm:min-h-[100px] bg-white/60 dark:bg-black/20 rounded-2xl border border-violet-100 dark:border-violet-800/40 p-3.5 sm:p-4 font-sans text-[15px] sm:text-[16px] leading-relaxed text-[#1E1B2E] dark:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400 resize-y"
-                        />
-                        <div className="flex justify-end mt-4 sm:mt-5">
-                            <button onClick={submitRewrite} disabled={loading || !userRewrite.trim()} className="font-mono text-xs tracking-wider uppercase text-white px-5 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-500 disabled:opacity-40 shadow-lg shadow-violet-500/30 hover:scale-[1.03] transition-all duration-200">
-                                {loading ? 'Comparing…' : 'Compare my rewrite'}
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {mode === 'live' && (
-                    <div className="text-center py-6">
-                        {!liveActive && (
-                            <>
-                                <p className="font-mono text-[10px] tracking-widest uppercase text-violet-500 dark:text-violet-400 mb-4">Choose your tutor</p>
-                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 mb-6">
-                                    {TUTORS.map((t) => (
-                                        <button
-                                            key={t.id}
-                                            onClick={() => setSelectedTutor(t)}
-                                            className={`flex flex-col items-center gap-1 p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer ${selectedTutor.id === t.id
-                                                ? 'bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-800/40 dark:to-fuchsia-800/40 border-violet-400'
-                                                : 'bg-white/60 dark:bg-black/20 border-violet-100 dark:border-violet-800/40 hover:border-violet-300'
-                                                }`}
-                                        >
-                                            <span className="text-base">{t.icon}</span>
-                                            <span className="font-sans text-[10px] font-medium text-[#1E1B2E] dark:text-violet-50">{t.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                        <p className="font-sans text-[13.5px] sm:text-[14px] text-[#6B6478] dark:text-violet-300/70 mb-5 px-2">
-                            {liveActive ? `🎙️ Live with ${selectedTutor.name} — just talk naturally.` : `Start a real-time spoken conversation with ${selectedTutor.name}.`}
-                        </p>
-                        <button
-                            onClick={liveActive ? stopLiveSession : startLiveSession}
-                            className={`font-mono text-xs uppercase px-6 sm:px-7 py-3 sm:py-3.5 rounded-full cursor-pointer transition-all ${liveActive ? 'bg-rose-500 animate-pulse text-white' : 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white'
-                                }`}
-                        >
-                            {liveActive ? '● End conversation' : 'Start conversation'}
-                        </button>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
                 {error && <p className="font-mono text-xs text-rose-500 dark:text-rose-400 mt-4 animate-[fade-slide-up_0.3s_ease-out] break-words">{error}</p>}
 
                 {result && (
@@ -1457,6 +1489,6 @@ export default function Home() {
                     </button>
                 ))}
             </nav>
-        </main>
+        </main >
     );
 }

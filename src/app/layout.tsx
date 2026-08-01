@@ -8,8 +8,8 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 
 export const metadata = {
-  title: 'Marginal — Show up. Speak up.',
-  description: 'Daily AI-powered English writing and speaking practice.',
+  title: 'UNSILENT - Find Your Voice. Share Your Wisdom',
+  description: 'Daily AI-powered English writing and speaking practice, powered by Wisdom Corner.',
   manifest: '/manifest.webmanifest',
 };
 

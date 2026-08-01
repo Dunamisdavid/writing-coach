@@ -16,7 +16,10 @@ export default function LandingPage() {
       <div className="pointer-events-none absolute top-1/3 -right-24 w-[28rem] h-[28rem] rounded-full bg-fuchsia-300/30 blur-3xl animate-[blob-float_24s_ease-in-out_infinite_reverse]" />
 
       <nav className="relative flex items-center justify-between max-w-5xl mx-auto px-6 py-6">
-        <span className="font-display font-bold text-xl text-[#1E1B2E] dark:text-white">✦ Marginal</span>
+        <div>
+          <Logo size="sm" />
+          <p className="font-mono text-[8px] tracking-widest uppercase text-violet-400 mt-0.5">Powered by Wisdom Corner</p>
+        </div>
         <div className="flex items-center gap-3">
           <Link href="/sign-in" className="font-mono text-xs uppercase text-violet-600 dark:text-violet-300 hover:text-violet-800 cursor-pointer transition-colors">
             Sign in
@@ -28,12 +31,15 @@ export default function LandingPage() {
       </nav>
 
       <section className="relative max-w-3xl mx-auto px-6 pt-16 pb-20 text-center">
+        <div className="flex justify-center mb-6">
+          <Logo size="lg" />
+        </div>
         <p className="font-mono text-[11px] tracking-widest uppercase text-violet-500 mb-4">Daily English Practice</p>
         <h1 className="font-display font-bold text-4xl sm:text-6xl text-[#1E1B2E] dark:text-white tracking-tight mb-5">
-          Show up. Speak up.
+          Find Your Voice.<br />Share Your Wisdom.
         </h1>
         <p className="text-[16px] sm:text-[18px] text-[#6B6478] dark:text-violet-300/70 mb-8 max-w-xl mx-auto">
-          Write, speak, and talk your way to fluent English with an AI coach that catches your mistakes and shows you exactly how to improve.
+          Write, speak, and talk your way to fluent English — with an AI coach that catches your mistakes and shows you exactly how to improve.
         </p>
         <Link
           href="/sign-up"
