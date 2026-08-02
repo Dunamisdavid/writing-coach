@@ -2,7 +2,6 @@ import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { checkRateLimit } from '@/lib/ratelimit';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -25,15 +24,6 @@ export async function POST(req: NextRequest) {
   console.log('DEBUG session:', JSON.stringify(session));
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-
-  const allowed = await checkRateLimit(`ai:${userId}`, 10, 60_000); // 10 requests per minute
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "You're going a bit fast — please wait a moment and try again." },
-      { status: 429 }
-    );
-  }
-
 
 
   const { text, prompt: userPrompt } = await req.json();

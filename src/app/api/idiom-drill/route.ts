@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function GET() {
