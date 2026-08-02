@@ -12,6 +12,10 @@ export async function POST(req: NextRequest) {
     const { scenarioLabel, messages } = await req.json();
     const learnerLines = messages.filter((m: any) => m.role === 'user').map((m: any) => m.content).join('\n');
 
+    if (learnerLines.length > 5000) {
+        return NextResponse.json({ error: 'This conversation is too long to review — try a shorter session next time.' }, { status: 400 });
+    }
+
     const prompt = `You are a precise, encouraging English communication coach for a non-native speaker who is a professional web developer.
 Below are ONLY the learner's lines from a roleplay conversation (scenario: ${scenarioLabel}). Evaluate their English across the whole conversation.
 Respond with ONLY a raw JSON object (no markdown fences, no preamble) with this exact shape:

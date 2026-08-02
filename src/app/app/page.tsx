@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import confetti from 'canvas-confetti';
 import { Logo } from '@/components/Logo';
+import { useRouter } from 'next/navigation';
 
 type Correction = { original: string; fixed: string; why: string; tag: string };
 type Scores = {
@@ -168,6 +169,17 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<Result | null>(null);
     const [error, setError] = useState('');
+
+    const router = useRouter(); // add this import: import { useRouter } from 'next/navigation';
+
+    useEffect(() => {
+        fetch('/api/me')
+            .then((r) => r.json())
+            .then((data) => {
+                if (!data.emailVerified) router.push('/verify-pending');
+            })
+            .catch(() => { });
+    }, []);
 
     const [darkMode, setDarkMode] = useState(false);
     useEffect(() => {

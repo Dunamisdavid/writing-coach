@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No rewrite provided' }, { status: 400 });
   }
 
+  if (userRewrite.length > 500) {
+    return NextResponse.json({ error: 'Please keep your rewrite under 500 characters.' }, { status: 400 });
+  }
+
   const prompt = `You are a professional writing coach for a non-native English speaker.
 Original casual sentence: "${original}"
 The learner rewrote it professionally as: "${userRewrite}"

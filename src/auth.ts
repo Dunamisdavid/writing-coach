@@ -29,15 +29,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: { signIn: '/sign-in' },
   trustHost: true,
   callbacks: {
-  authorized: ({ auth }) => !!auth?.user,
-  jwt: async ({ token, user }) => {
-    if (user) token.id = user.id;
-    return token;
-  },
-  session: async ({ session, token }) => {
-    if (session.user) session.user.id = token.id as string;
-    return session;
-  },
-
+    authorized: ({ auth }) => !!auth?.user,
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+        token.emailVerified = (user as any).emailVerified;
+      }
+      return token;
+    },
+    session: async ({ session, token }) => {
+      if (session.user) {
+        session.user.id = token.id as string;
+        (session.user as any).emailVerified = token.emailVerified;
+      }
+      return session;
+    },
   },
 });

@@ -15,6 +15,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'No audio provided' }, { status: 400 });
     }
 
+    if (audioBase64.length > 10_000_000) { // ~7MB decoded, generous for a minute+ of speech
+        return NextResponse.json({ error: 'That recording is too long — please keep it under a couple of minutes.' }, { status: 400 });
+    }
+    
     const instruction = `You are a precise, encouraging English speaking coach for a non-native speaker who is a professional web developer.
 Listen to this audio recording carefully — including pronunciation, pacing, and hesitations, not just the words. First transcribe exactly what was said, then evaluate it.
 Respond with ONLY a raw JSON object (no markdown fences, no preamble) with this exact shape:

@@ -10,6 +10,15 @@ export async function POST(req: NextRequest) {
     .map((m: any) => `${m.role === 'user' ? 'Learner' : 'You'}: ${m.content}`)
     .join('\n');
 
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage?.content?.length > 500) {
+    return NextResponse.json({ error: 'Please keep your message under 500 characters.' }, { status: 400 });
+  }
+
+  if (messages.length > 30) {
+    return NextResponse.json({ error: 'This conversation has gotten quite long — try ending it and starting a new one.' }, { status: 400 });
+  }
+
   const prompt = `${persona}
 You are talking with a non-native English speaker practicing their conversation skills. Keep your replies natural, conversational, and SHORT (1-3 sentences) — like a real spoken exchange, not an essay. Never break character or mention that this is practice.
 
