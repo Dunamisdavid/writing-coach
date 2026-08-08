@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'hello@unsilent.name.ng',
       to: email,
       subject: 'Verify your UNSILENT account',
       html: `<p>Welcome! Click below to verify your email:</p><p><a href="${verifyUrl}">Verify my email</a> — this link expires in 24 hours.</p>`,

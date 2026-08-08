@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'hello@unsilent.name.ng',
       to: email,
       subject: 'Reset your Marginal password',
       html: `

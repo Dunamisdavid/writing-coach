@@ -20,7 +20,7 @@ export async function POST() {
 
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify-email?token=${token}`;
   await resend.emails.send({
-    from: 'onboarding@resend.dev',
+    from: 'hello@unsilent.name.ng',
     to: user.email,
     subject: 'Verify your UNSILENT account',
     html: `<p><a href="${verifyUrl}">Verify my email</a> — this link expires in 24 hours.</p>`,
